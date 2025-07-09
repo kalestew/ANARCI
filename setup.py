@@ -1,7 +1,7 @@
 import shutil, os, subprocess
 import site, sys
 from importlib import util
-from distutils.core import setup
+from setuptools import setup
 from setuptools.command.install import install
 
 class CustomInstallCommand(install):
@@ -16,18 +16,28 @@ class CustomInstallCommand(install):
 
        # Build HMMs from IMGT germlines
        os.chdir("build_pipeline")
-       print('INFO: Downloading germlines from IMGT and building HMMs...')
-       print("INFO: running 'RUN_pipeline.sh', this will take a couple a minutes.")
-       proc = subprocess.Popen(["bash", "RUN_pipeline.sh"], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-       o, e = proc.communicate()
+       
+       # Check if HMMs already exist
+       if os.path.exists("HMMs") and os.path.exists("curated_alignments/germlines.py"):
+           print('INFO: HMMs already built, skipping HMM generation...')
+       else:
+           print('INFO: Downloading germlines from IMGT and building HMMs...')
+           print("INFO: running 'RUN_pipeline.sh', this will take a couple a minutes.")
+           proc = subprocess.Popen(["bash", "RUN_pipeline.sh"], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+           o, e = proc.communicate()
 
-       print(o.decode())
-       print(e.decode())
+           print(o.decode())
+           print(e.decode())
        
        # Copy HMMs where ANARCI can find them
        shutil.copy( "curated_alignments/germlines.py", ANARCI_LOC )
-       os.mkdir(os.path.join(ANARCI_LOC, "dat"))
-       shutil.copytree( "HMMs", os.path.join(ANARCI_LOC, "dat/HMMs/") )
+       dat_dir = os.path.join(ANARCI_LOC, "dat")
+       if not os.path.exists(dat_dir):
+           os.mkdir(dat_dir)
+       hmm_dest = os.path.join(ANARCI_LOC, "dat/HMMs/")
+       if os.path.exists(hmm_dest):
+           shutil.rmtree(hmm_dest)
+       shutil.copytree( "HMMs", hmm_dest )
       
       # Remove data from HMMs generation
        try:
