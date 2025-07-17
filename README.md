@@ -28,14 +28,147 @@ ANARCI -i myfile.fasta
 
 # Installation
 
-The easiest way to install ANARCI and its dependencies is using conda
+## Recommended Installation (Tested Setup)
 
+**Important**: ANARCI currently has compatibility issues with Python 3.13. Use Python 3.11 or 3.12 for best results.
+
+### Step 1: Create a dedicated conda environment
+```bash
+# Create environment with Python 3.11
+conda create -n anarci_env python=3.11 -y
+conda activate anarci_env
+```
+
+### Step 2: Install dependencies
+```bash
+# Install required packages
+conda install -c conda-forge biopython numpy pandas matplotlib seaborn -y
+conda install -c bioconda hmmer=3.3.2 -y
+```
+
+### Step 3: Install ANARCI
+```bash
+# Install ANARCI from PyPI (recommended)
+pip install anarci
+
+# Alternative: Install from source
+# cd ANARCI
+# python setup.py install
+```
+
+### Step 4: Verify installation
+Test your installation with this Python script:
 ```python
+#!/usr/bin/env python3
+from anarci import number as anarci_number
+
+# Test sequence (antibody heavy chain)
+seq = "EVQLVESGGGLVQPGGSLRLSCAASGFNISYYSIHWVRQAPGKGLEWVASIYPYSGYTYYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCVNNLWIRPRRSALSNILHIWGQGTLVTVSS"
+
+result = anarci_number(seq, scheme='chothia')
+if result:
+    numbering, chain_type = result
+    positions = [pos for pos in numbering if pos[1] != '-']
+    print(f"✓ ANARCI working! Detected {chain_type} chain with {len(positions)} positions")
+else:
+    print("✗ ANARCI test failed")
+```
+
+### Step 5: Add to Jupyter (optional)
+If you use Jupyter notebooks:
+```bash
+conda activate anarci_env
+pip install ipykernel
+python -m ipykernel install --user --name anarci_env --display-name "Python (ANARCI)"
+```
+
+## Troubleshooting
+
+### Issue 1: "cannot unpack non-iterable int object" error
+This indicates missing HMM data files. Try:
+```bash
+# Check if HMM files exist
+python -c "import anarci, os; print(os.path.exists(os.path.join(os.path.dirname(anarci.__file__), 'dat', 'HMMs', 'ALL.hmm')))"
+
+# If False, reinstall ANARCI
+pip uninstall anarci -y
+pip install anarci
+```
+
+### Issue 2: Python 3.13 compatibility
+ANARCI may not work with Python 3.13. Create environment with older Python:
+```bash
+conda create -n anarci_env python=3.11 -y
+conda activate anarci_env
+pip install anarci
+```
+
+### Issue 3: Missing HMM files after installation
+If ANARCI installs but HMM files are missing:
+```bash
+# Check ANARCI data directory structure
+python -c "import anarci, os; anarci_dir = os.path.dirname(anarci.__file__); print(f'ANARCI dir: {anarci_dir}'); print(f'Files: {os.listdir(os.path.join(anarci_dir, \"dat\"))}')"
+
+# If HMMs directory is missing, the installation may be incomplete
+# Try reinstalling from GitHub:
+pip uninstall anarci -y
+pip install git+https://github.com/oxpig/ANARCI.git
+```
+
+### Issue 4: Testing installation
+Use this comprehensive test script:
+```python
+import os
+import sys
+from anarci import number as anarci_number
+import anarci
+
+# Check installation
+anarci_dir = os.path.dirname(anarci.__file__)
+data_dir = os.path.join(anarci_dir, 'dat')
+hmms_dir = os.path.join(data_dir, 'HMMs')
+
+print(f"ANARCI location: {anarci_dir}")
+print(f"Data directory exists: {os.path.exists(data_dir)}")
+print(f"HMMs directory exists: {os.path.exists(hmms_dir)}")
+
+if os.path.exists(hmms_dir):
+    hmm_files = [f for f in os.listdir(hmms_dir) if f.endswith('.hmm')]
+    print(f"HMM files found: {len(hmm_files)}")
+    if hmm_files:
+        print("✓ ANARCI data files are present")
+    else:
+        print("✗ No HMM files found")
+else:
+    print("✗ HMMs directory missing")
+
+# Test with sample sequences
+test_sequences = [
+    ("Heavy chain", "EVQLVESGGGLVQPGGSLRLSCAASGFNISYYSIHWVRQAPGKGLEWVASIYPYSGYTYYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCVNNLWIRPRRSALSNILHIWGQGTLVTVSS"),
+    ("Light chain", "DIQMTQSPSSLSASVGDRVTITCRASQSVSSAVAWYQQKPGKAPKLLIYSASSLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQYSWYSPITFGQGTKVEIK")
+]
+
+for name, seq in test_sequences:
+    result = anarci_number(seq, scheme='chothia')
+    if result:
+        numbering, chain_type = result
+        positions = [pos for pos in numbering if pos[1] != '-']
+        print(f"✓ {name}: Detected as {chain_type} chain, {len(positions)} positions")
+    else:
+        print(f"✗ {name}: Failed to number")
+```
+
+## Legacy Installation Method
+
+For reference, the original installation method:
+```bash
 conda install -c conda-forge biopython -y
 conda install -c bioconda hmmer=3.3.2 -y
 cd ANARCI
 python setup.py install
 ```
+
+**Note**: This method may encounter issues with newer Python versions and missing data files.
 
 # Further info
 
