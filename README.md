@@ -42,7 +42,7 @@ conda activate anarci_env
 ### Step 2: Install dependencies
 ```bash
 # Install required packages
-conda install -c conda-forge biopython numpy pandas matplotlib seaborn -y
+conda install -c conda-forge biopython numpy pandas matplotlib jupyter notebook seaborn -y
 conda install -c bioconda hmmer=3.3.2 -y
 ```
 
